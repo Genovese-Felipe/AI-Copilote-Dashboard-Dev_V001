@@ -3,19 +3,56 @@
 <head>
     <title>Dashboard de Análise de Incidentes - Interativo</title>
     <meta charset="utf-8">
-    <!-- Using self-contained charts since CDNs might be blocked -->
+    <!-- Self-contained SVG charts for GitHub Pages compatibility -->
     <style>
-        .chart-placeholder {
-            height: 250px;
+        .chart-container {
+            height: 300px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
-            border: 2px dashed #dee2e6;
+            background: white;
             border-radius: 8px;
-            color: #6c757d;
+            overflow: hidden;
+        }
+        
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .chart-bar {
+            transition: fill 0.2s ease;
+        }
+        
+        .chart-bar:hover {
+            opacity: 0.8;
+        }
+        
+        .chart-text {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            fill: #495057;
+        }
+        
+        .chart-title-text {
             font-size: 14px;
-            text-align: center;
+            font-weight: bold;
+            fill: #495057;
+        }
+        
+        .chart-axis {
+            stroke: #dee2e6;
+            stroke-width: 1;
+        }
+        
+        .pie-slice {
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .pie-slice:hover {
+            transform: scale(1.05);
+            transform-origin: center;
         }
     </style>
     <style>
@@ -315,8 +352,10 @@
         <div class="chart-card">
             <h3 class="chart-title">📊 Incidentes por Categoria</h3>
             <div class="chart-content">
-                <div class="chart-placeholder" id="chartCategory">
-                    Carregando gráfico de categorias...
+                <div class="chart-container" id="chartCategory">
+                    <svg class="chart-svg" id="chartCategorySvg">
+                        <text x="50%" y="50%" text-anchor="middle" class="chart-text">Carregando gráfico...</text>
+                    </svg>
                 </div>
             </div>
         </div>
@@ -324,8 +363,10 @@
         <div class="chart-card">
             <h3 class="chart-title">🔍 Incidentes por Causa</h3>
             <div class="chart-content">
-                <div class="chart-placeholder" id="chartCause">
-                    Carregando gráfico de causas...
+                <div class="chart-container" id="chartCause">
+                    <svg class="chart-svg" id="chartCauseSvg">
+                        <text x="50%" y="50%" text-anchor="middle" class="chart-text">Carregando gráfico...</text>
+                    </svg>
                 </div>
             </div>
         </div>
@@ -333,8 +374,10 @@
         <div class="chart-card">
             <h3 class="chart-title">📈 Tendência Temporal</h3>
             <div class="chart-content">
-                <div class="chart-placeholder" id="chartTrend">
-                    Carregando gráfico de tendências...
+                <div class="chart-container" id="chartTrend">
+                    <svg class="chart-svg" id="chartTrendSvg">
+                        <text x="50%" y="50%" text-anchor="middle" class="chart-text">Carregando gráfico...</text>
+                    </svg>
                 </div>
             </div>
         </div>
@@ -342,8 +385,10 @@
         <div class="chart-card">
             <h3 class="chart-title">🏢 Incidentes por Local</h3>
             <div class="chart-content">
-                <div class="chart-placeholder" id="chartSite">
-                    Carregando gráfico de locais...
+                <div class="chart-container" id="chartSite">
+                    <svg class="chart-svg" id="chartSiteSvg">
+                        <text x="50%" y="50%" text-anchor="middle" class="chart-text">Carregando gráfico...</text>
+                    </svg>
                 </div>
             </div>
         </div>
@@ -351,8 +396,10 @@
         <div class="chart-card">
             <h3 class="chart-title">📅 Distribuição Mensal</h3>
             <div class="chart-content">
-                <div class="chart-placeholder" id="chartMonth">
-                    Carregando gráfico mensal...
+                <div class="chart-container" id="chartMonth">
+                    <svg class="chart-svg" id="chartMonthSvg">
+                        <text x="50%" y="50%" text-anchor="middle" class="chart-text">Carregando gráfico...</text>
+                    </svg>
                 </div>
             </div>
         </div>
@@ -360,8 +407,10 @@
         <div class="chart-card">
             <h3 class="chart-title">⚠️ Severidade</h3>
             <div class="chart-content">
-                <div class="chart-placeholder" id="chartSeverity">
-                    Carregando gráfico de severidade...
+                <div class="chart-container" id="chartSeverity">
+                    <svg class="chart-svg" id="chartSeveritySvg">
+                        <text x="50%" y="50%" text-anchor="middle" class="chart-text">Carregando gráfico...</text>
+                    </svg>
                 </div>
             </div>
         </div>
@@ -381,7 +430,6 @@
                 
                 initializeFilters();
                 updateDashboard();
-                updateChartPlaceholders();
                 showNotification('Dashboard carregado com sucesso!', 'success');
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
@@ -389,7 +437,6 @@
                 generateSampleData();
                 initializeFilters();
                 updateDashboard();
-                updateChartPlaceholders();
                 showNotification('Dashboard inicializado com dados de demonstração', 'warning');
             }
         }
@@ -480,7 +527,7 @@
             });
 
             updateDashboard();
-            updateChartPlaceholders();
+            updateDashboard();
             showNotification(`Filtros aplicados! ${filteredData.length} registros encontrados.`);
         }
 
@@ -494,7 +541,6 @@
 
             filteredData = [...dashboardData];
             updateDashboard();
-            updateChartPlaceholders();
             showNotification('Filtros resetados!');
         }
 
@@ -509,6 +555,263 @@
         // Update all dashboard components
         function updateDashboard() {
             updateStatistics();
+            updateCharts();
+        }
+
+        // Update all charts
+        function updateCharts() {
+            updateCategoryChart();
+            updateCauseChart();
+            updateTrendChart();
+            updateSiteChart();
+            updateMonthChart();
+            updateSeverityChart();
+        }
+
+        // Create bar chart using SVG
+        function createBarChart(svgId, data, colors = '#667eea') {
+            const svg = document.getElementById(svgId);
+            if (!svg) return;
+
+            svg.innerHTML = '';
+            
+            const width = 380;
+            const height = 280;
+            const margin = { top: 20, right: 20, bottom: 60, left: 60 };
+            const chartWidth = width - margin.left - margin.right;
+            const chartHeight = height - margin.top - margin.bottom;
+
+            const maxValue = Math.max(...data.map(d => d.value));
+            const barWidth = chartWidth / data.length;
+
+            // Chart group
+            const chartGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            chartGroup.setAttribute('transform', `translate(${margin.left}, ${margin.top})`);
+
+            // Y-axis
+            const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            yAxis.setAttribute('x1', '0');
+            yAxis.setAttribute('y1', '0');
+            yAxis.setAttribute('x2', '0');
+            yAxis.setAttribute('y2', chartHeight);
+            yAxis.setAttribute('class', 'chart-axis');
+            chartGroup.appendChild(yAxis);
+
+            // X-axis
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', '0');
+            xAxis.setAttribute('y1', chartHeight);
+            xAxis.setAttribute('x2', chartWidth);
+            xAxis.setAttribute('y2', chartHeight);
+            xAxis.setAttribute('class', 'chart-axis');
+            chartGroup.appendChild(xAxis);
+
+            // Bars and labels
+            data.forEach((item, index) => {
+                const barHeight = (item.value / maxValue) * chartHeight;
+                const x = index * barWidth + barWidth * 0.1;
+                const y = chartHeight - barHeight;
+
+                // Bar
+                const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                bar.setAttribute('x', x);
+                bar.setAttribute('y', y);
+                bar.setAttribute('width', barWidth * 0.8);
+                bar.setAttribute('height', barHeight);
+                bar.setAttribute('fill', colors);
+                bar.setAttribute('class', 'chart-bar');
+                bar.setAttribute('title', `${item.label}: ${item.value}`);
+                chartGroup.appendChild(bar);
+
+                // Value label on top of bar
+                const valueLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                valueLabel.setAttribute('x', x + (barWidth * 0.4));
+                valueLabel.setAttribute('y', y - 5);
+                valueLabel.setAttribute('text-anchor', 'middle');
+                valueLabel.setAttribute('class', 'chart-text');
+                valueLabel.textContent = item.value.toLocaleString();
+                chartGroup.appendChild(valueLabel);
+
+                // X-axis labels
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', x + (barWidth * 0.4));
+                label.setAttribute('y', chartHeight + 15);
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('class', 'chart-text');
+                label.textContent = item.label.length > 8 ? item.label.substring(0, 8) + '...' : item.label;
+                chartGroup.appendChild(label);
+            });
+
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+            svg.appendChild(chartGroup);
+        }
+
+        // Create pie chart using SVG
+        function createPieChart(svgId, data) {
+            const svg = document.getElementById(svgId);
+            if (!svg) return;
+
+            svg.innerHTML = '';
+            
+            const width = 380;
+            const height = 280;
+            const radius = Math.min(width, height) / 2 - 40;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            const total = data.reduce((sum, item) => sum + item.value, 0);
+            const colors = ['#f56565', '#ed8936', '#ecc94b', '#48bb78', '#667eea', '#9f7aea'];
+
+            let currentAngle = 0;
+
+            data.forEach((item, index) => {
+                const percentage = item.value / total;
+                const angle = percentage * 2 * Math.PI;
+                const endAngle = currentAngle + angle;
+
+                // Create pie slice path
+                const largeArcFlag = angle > Math.PI ? 1 : 0;
+                const x1 = centerX + radius * Math.cos(currentAngle);
+                const y1 = centerY + radius * Math.sin(currentAngle);
+                const x2 = centerX + radius * Math.cos(endAngle);
+                const y2 = centerY + radius * Math.sin(endAngle);
+
+                const pathData = [
+                    `M ${centerX} ${centerY}`,
+                    `L ${x1} ${y1}`,
+                    `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                    'Z'
+                ].join(' ');
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', colors[index % colors.length]);
+                path.setAttribute('class', 'pie-slice');
+                path.setAttribute('title', `${item.label}: ${item.value} (${(percentage * 100).toFixed(1)}%)`);
+                svg.appendChild(path);
+
+                // Add percentage label
+                const labelAngle = currentAngle + angle / 2;
+                const labelRadius = radius * 0.7;
+                const labelX = centerX + labelRadius * Math.cos(labelAngle);
+                const labelY = centerY + labelRadius * Math.sin(labelAngle);
+
+                if (percentage > 0.05) { // Only show label if slice is big enough
+                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    label.setAttribute('x', labelX);
+                    label.setAttribute('y', labelY);
+                    label.setAttribute('text-anchor', 'middle');
+                    label.setAttribute('class', 'chart-text');
+                    label.setAttribute('fill', 'white');
+                    label.setAttribute('font-weight', 'bold');
+                    label.textContent = `${(percentage * 100).toFixed(1)}%`;
+                    svg.appendChild(label);
+                }
+
+                currentAngle = endAngle;
+            });
+
+            // Add legend
+            const legendY = height - 60;
+            data.forEach((item, index) => {
+                const legendX = 20 + (index * 80);
+                
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', legendX);
+                rect.setAttribute('y', legendY);
+                rect.setAttribute('width', '12');
+                rect.setAttribute('height', '12');
+                rect.setAttribute('fill', colors[index % colors.length]);
+                svg.appendChild(rect);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', legendX + 15);
+                text.setAttribute('y', legendY + 9);
+                text.setAttribute('class', 'chart-text');
+                text.setAttribute('font-size', '10');
+                text.textContent = item.label.length > 6 ? item.label.substring(0, 6) + '...' : item.label;
+                svg.appendChild(text);
+            });
+
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        }
+
+        // Update category chart
+        function updateCategoryChart() {
+            const categoryData = groupBy(filteredData, 'Category', 'Count');
+            const sortedData = Object.entries(categoryData)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8)
+                .map(([label, value]) => ({ label, value }));
+            
+            createBarChart('chartCategorySvg', sortedData, '#667eea');
+        }
+
+        // Update cause chart
+        function updateCauseChart() {
+            const causeData = groupBy(filteredData, 'Cause', 'Count');
+            const sortedData = Object.entries(causeData)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8)
+                .map(([label, value]) => ({ label, value }));
+            
+            createBarChart('chartCauseSvg', sortedData, '#38a169');
+        }
+
+        // Update trend chart (line-like using bars)
+        function updateTrendChart() {
+            const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const trendData = {};
+            
+            filteredData.forEach(item => {
+                const key = `${item.Year}-${item.Month}`;
+                trendData[key] = (trendData[key] || 0) + item.Count;
+            });
+
+            const sortedTrends = Object.entries(trendData)
+                .sort((a, b) => {
+                    const [yearA, monthA] = a[0].split('-');
+                    const [yearB, monthB] = b[0].split('-');
+                    const dateA = new Date(yearA, monthOrder.indexOf(monthA));
+                    const dateB = new Date(yearB, monthOrder.indexOf(monthB));
+                    return dateA - dateB;
+                })
+                .slice(0, 12)
+                .map(([label, value]) => ({ label, value }));
+
+            createBarChart('chartTrendSvg', sortedTrends, '#e53e3e');
+        }
+
+        // Update site chart
+        function updateSiteChart() {
+            const siteData = groupBy(filteredData, 'Site', 'Count');
+            const sortedData = Object.entries(siteData)
+                .sort((a, b) => b[1] - a[1])
+                .map(([label, value]) => ({ label, value }));
+            
+            createBarChart('chartSiteSvg', sortedData, '#9f7aea');
+        }
+
+        // Update month chart
+        function updateMonthChart() {
+            const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthData = groupBy(filteredData, 'Month', 'Count');
+            
+            const sortedData = monthOrder.map(month => ({
+                label: month,
+                value: monthData[month] || 0
+            }));
+            
+            createBarChart('chartMonthSvg', sortedData, '#48bb78');
+        }
+
+        // Update severity chart
+        function updateSeverityChart() {
+            const severityData = groupBy(filteredData, 'Severity', 'Count');
+            const sortedData = Object.entries(severityData)
+                .map(([label, value]) => ({ label, value }));
+            
+            createPieChart('chartSeveritySvg', sortedData);
         }
 
         // Update statistics cards
@@ -523,56 +826,6 @@
             document.getElementById('totalIncidentes').textContent = totalIncidents.toLocaleString();
             document.getElementById('totalLocais').textContent = activeSites;
             document.getElementById('periodo').textContent = period;
-        }
-
-        // Update chart placeholders with data summary
-        function updateChartPlaceholders() {
-            // Category chart
-            const categoryData = groupBy(filteredData, 'Category', 'Count');
-            const topCategory = Object.entries(categoryData).sort((a, b) => b[1] - a[1])[0];
-            document.getElementById('chartCategory').innerHTML = topCategory ? 
-                `📊 Maior categoria: <strong>${topCategory[0]}</strong><br>Total: ${topCategory[1].toLocaleString()} incidentes` :
-                'Nenhum dado de categoria disponível';
-
-            // Cause chart
-            const causeData = groupBy(filteredData, 'Cause', 'Count');
-            const topCause = Object.entries(causeData).sort((a, b) => b[1] - a[1])[0];
-            document.getElementById('chartCause').innerHTML = topCause ? 
-                `🔍 Principal causa: <strong>${topCause[0]}</strong><br>Total: ${topCause[1].toLocaleString()} incidentes` :
-                'Nenhum dado de causa disponível';
-
-            // Trend chart
-            const trendData = {};
-            filteredData.forEach(item => {
-                const key = `${item.Year}-${item.Month}`;
-                trendData[key] = (trendData[key] || 0) + item.Count;
-            });
-            const trendEntries = Object.entries(trendData);
-            const avgTrend = trendEntries.length > 0 ? (Object.values(trendData).reduce((a, b) => a + b, 0) / trendEntries.length).toFixed(0) : 0;
-            document.getElementById('chartTrend').innerHTML = 
-                `📈 Média mensal: <strong>${avgTrend}</strong> incidentes<br>Períodos analisados: ${trendEntries.length}`;
-
-            // Site chart
-            const siteData = groupBy(filteredData, 'Site', 'Count');
-            const topSite = Object.entries(siteData).sort((a, b) => b[1] - a[1])[0];
-            document.getElementById('chartSite').innerHTML = topSite ? 
-                `🏢 Local com mais incidentes: <strong>${topSite[0]}</strong><br>Total: ${topSite[1].toLocaleString()} incidentes` :
-                'Nenhum dado de local disponível';
-
-            // Month chart
-            const monthData = groupBy(filteredData, 'Month', 'Count');
-            const topMonth = Object.entries(monthData).sort((a, b) => b[1] - a[1])[0];
-            document.getElementById('chartMonth').innerHTML = topMonth ? 
-                `📅 Mês com mais incidentes: <strong>${topMonth[0]}</strong><br>Total: ${topMonth[1].toLocaleString()} incidentes` :
-                'Nenhum dado mensal disponível';
-
-            // Severity chart
-            const severityData = groupBy(filteredData, 'Severity', 'Count');
-            const totalSeverity = Object.values(severityData).reduce((a, b) => a + b, 0);
-            const severityPercentages = Object.entries(severityData)
-                .map(([severity, count]) => `${severity}: ${((count/totalSeverity)*100).toFixed(1)}%`)
-                .join('<br>');
-            document.getElementById('chartSeverity').innerHTML = severityPercentages || 'Nenhum dado de severidade disponível';
         }
 
         // Helper function to group data
